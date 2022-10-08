@@ -1,4 +1,5 @@
 package com.bridgelabz.bookstore.service;
+
 import com.bridgelabz.bookstore.dto.OrderDTO;
 import com.bridgelabz.bookstore.exception.BookStoreException;
 import com.bridgelabz.bookstore.model.BookData;
@@ -47,8 +48,8 @@ public class OrderService implements IOrderService {
                 OrderData newOrder = new OrderData(totalPrice, orderDTO.getQuantity(), orderDTO.getAddress(), book.get(), user.get(), orderDTO.isCancel());
                 orderRepository.save(newOrder);
                 String token = util.createToken(newOrder.getOrderId());
-                mailService.sendEmail(newOrder.getUserRegistrationData().getEmail(), "Test Email", "Order Created SuccessFully "
-                        + newOrder.getOrderId() );
+                mailService.sendEmail(newOrder.getUserRegistrationData().getEmail(), "Test Email", "Order Created SuccessFully : "
+                        + newOrder.getOrderId() +": " +token);
                 cartService.deleteCartData(token);
                 log.info("Order Record Inserted Successfully");
                 return token;
@@ -64,13 +65,20 @@ public class OrderService implements IOrderService {
     @Override
     public List<OrderData> getAllOrder(String token) {
         int id = util.decodeToken(token);
-        Optional<OrderData> orderData = orderRepository.findById(id);
+        Optional<UserRegistrationData> orderData = userRegistrationRepository.findById(id);
+        Optional<OrderData> orderDataId = orderRepository.findById(id);
         if (orderData.isPresent()) {
             List<OrderData> listOrderData = orderRepository.findAll();
             log.info("ALL Order Records Retrieved Successfully");
             mailService.sendEmail("Vigneshjmax@gmail.com", "Email", "Get Your Data With This Token "
-                    + orderData.get().getUserRegistrationData().getEmail());
+                    + token);
 
+            return listOrderData;
+        } else if (orderDataId.isPresent()) {
+            List<OrderData> listOrderData = orderRepository.findAll();
+            log.info("ALL Order Records Retrieved Successfully");
+            mailService.sendEmail("Vigneshjmax@gmail.com", "Email", "Get Your Data With This Token "
+                    + token);
             return listOrderData;
         } else {
             System.out.println("Exception ...Token not found!");
@@ -86,7 +94,7 @@ public class OrderService implements IOrderService {
         if (orderData.isPresent()) {
             log.info("Order Record Retrieved Successfully For id " + id);
             mailService.sendEmail("Vigneshjmax@gmail.com", " Email", "Get Your Data With This Token "
-                    + orderData.get().getUserRegistrationData().getEmail() );
+                    + orderData.get().getUserRegistrationData().getEmail());
 
             return orderData.get();
         } else {
@@ -105,7 +113,7 @@ public class OrderService implements IOrderService {
             order.get().setCancel(true);
             orderRepository.save(order.get());
             mailService.sendEmail(order.get().getUserRegistrationData().getEmail(), "Test Email", "Canceled Order SuccessFully "
-                    + order.get().getOrderId() );
+                    + order.get().getOrderId());
 
             return order.get();
         } else {
